@@ -52,7 +52,7 @@ public static final String NOTE_POSITION ="com.beginner.notekeeper.NOTE_POSITION
         readDisplayStateValue();
         mTextNoteTitle = findViewById(R.id.text_note_title);
         mTextNoteText = findViewById(R.id.text_note_text);
-if(!mIsNewNote)
+          if(!mIsNewNote)
         displayNote(mSpinnerCourses, mTextNoteTitle, mTextNoteText);
     }
 
