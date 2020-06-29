@@ -54,6 +54,7 @@ public static final String NOTE_POSITION ="com.beginner.notekeeper.NOTE_POSITION
         mTextNoteText = findViewById(R.id.text_note_text);
           if(!mIsNewNote)
         displayNote(mSpinnerCourses, mTextNoteTitle, mTextNoteText);
+          //testing github
     }
 
     private void displayNote(Spinner spinnerCourses, EditText textNoteTitle, EditText textNoteText) {
