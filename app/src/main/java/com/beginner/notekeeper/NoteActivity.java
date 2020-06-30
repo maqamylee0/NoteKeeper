@@ -3,8 +3,10 @@ package com.beginner.notekeeper;
 import android.content.Intent;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.view.Menu;
 import android.view.MenuItem;
@@ -23,14 +25,28 @@ public static final String NOTE_POSITION ="com.beginner.notekeeper.NOTE_POSITION
     private EditText mTextNoteTitle;
     private EditText mTextNoteText;
     private int mNoteposition;
+    private boolean mIsCancelling;
+    private String mOriginalNoteCourseId;
+    private String mOriginalNoteTitle;
+    private String mOriginalNoteText;
+    private  NoteActivityViewModel mViewModel;
+
 
     @Override
     protected void onPause() {
         super.onPause();
-        saveNote();
-    }
 
-    private void saveNote() {
+        if(mIsCancelling){
+            if (mIsNewNote){
+           DataManager.getInstance().removeNote(mNoteposition);
+        }else{
+                storePreviousNoteValue();
+            }
+
+        saveNote(); }
+        }
+
+    private void saveNote(){
         mNote.setCourse((CourseInfo) mSpinnerCourses.getSelectedItem());
         mNote.setTitle(mTextNoteTitle.getText().toString());
         mNote.setText(mTextNoteText.getText().toString());
@@ -43,6 +59,16 @@ public static final String NOTE_POSITION ="com.beginner.notekeeper.NOTE_POSITION
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        ViewModelProvider viewModelProvider= new ViewModelProvider(getViewModelStore(),
+        ViewModelProvider.AndroidViewModelFactory.getInstance(getApplication()));
+        mViewModel=viewModelProvider.get(NoteActivityViewModel.class);
+
+        if (mViewModel.mIsNewlyCreated && savedInstanceState != null)
+    mViewModel.restoreState(savedInstanceState);
+
+
+        mViewModel.mIsNewlyCreated=false;
+
         mSpinnerCourses = findViewById(R.id.spinner_courses);
         List<CourseInfo> courses= DataManager.getInstance().getCourses();
         ArrayAdapter<CourseInfo> adapterCourses=new ArrayAdapter<>( this,android.R.layout.simple_spinner_item,courses);
@@ -50,11 +76,22 @@ public static final String NOTE_POSITION ="com.beginner.notekeeper.NOTE_POSITION
         mSpinnerCourses.setAdapter(adapterCourses);
 
         readDisplayStateValue();
+        saveOriginalNoteValue();
         mTextNoteTitle = findViewById(R.id.text_note_title);
         mTextNoteText = findViewById(R.id.text_note_text);
+
           if(!mIsNewNote)
         displayNote(mSpinnerCourses, mTextNoteTitle, mTextNoteText);
           //testing github
+    }
+
+    private void saveOriginalNoteValue() {
+        if(mIsNewNote)
+            return;
+
+           mViewModel.mOriginalNoteCourseId = mNote.getCourse().getCourseId();
+          mViewModel.mOriginalNoteTitle=mNote.getTitle();
+           mViewModel.mOriginalNoteText=mNote.getText();
     }
 
     private void displayNote(Spinner spinnerCourses, EditText textNoteTitle, EditText textNoteText) {
@@ -99,6 +136,9 @@ public static final String NOTE_POSITION ="com.beginner.notekeeper.NOTE_POSITION
            if (id == R.id.action_send_mail) {
                sendEmail();
                return true;
+           }else if (id==R.id.action_cancel){
+               mIsCancelling = true;
+               finish();
            }
 
            return super.onOptionsItemSelected(item);
@@ -122,4 +162,19 @@ public static final String NOTE_POSITION ="com.beginner.notekeeper.NOTE_POSITION
         DataManager dm=DataManager.getInstance();
         mNoteposition = dm.createNewNote();
         mNote=dm.getNotes().get(mNoteposition);
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if(outState != null) {
+            mViewModel.saveState(outState);
+        }
+    }
+
+    private void storePreviousNoteValue() {
+        CourseInfo course =DataManager.getInstance().getCourse(mOriginalNoteCourseId);
+        mNote.setCourse(course);
+        mNote.setTitle(mViewModel.mOriginalNoteTitle);
+        mNote.setText(mViewModel.mOriginalNoteText);
     }}
